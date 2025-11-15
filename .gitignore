@@ -50,6 +50,7 @@ logs/
 wandb/
 tensorboard/
 
+runs_sdcl_picai/
 runs_sdcl_picai
 
 # --------------------------------------------------------------------

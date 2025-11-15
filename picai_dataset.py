@@ -256,7 +256,7 @@ def get_sdcl_dataloaders(
     *,
     cache: bool = False,
     cache_rate: float = 1.0,
-    num_workers: int = 4,
+    num_workers: int = 2,
     batch_size: int = 2,
     seed: int = 0,
 ):
