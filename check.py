@@ -1,10 +1,12 @@
+# check.py
 import torch
-from picai_dataset import prepare_semi_supervised, get_sdcl_dataloaders
+from picai_dataset import prepare_semi_supervised
 
 def main():
-    root = "/content/drive/MyDrive/Research/Dataset/ssl_final_data/picai_144_128_16"   # <<< CHANGE THIS
+    # 👇 change this to your real PiCAI root
+    root = r"E:\Dataset\PICAI\ssl_final_data\picai_144_128_16"
 
-    print("\n===== Testing prepare_semi_supervised() =====")
+    print("\n===== Building loaders with prepare_semi_supervised() =====")
     lab_loader, unlab_loader, val_loader = prepare_semi_supervised(
         root,
         batch_size_labeled=1,
@@ -16,36 +18,49 @@ def main():
     print(f"Validation cases:    {len(val_loader.dataset)}")
     print(f"Unlabeled cases:     {len(unlab_loader.dataset)}")
 
-    # ----- Check a labeled sample -----
-    print("\n===== Checking ONE LABELED SAMPLE =====")
-    img, lab = next(iter(lab_loader))
-    print(f"Image shape: {tuple(img.shape)}")   # expect [1, 3, 144, 128, 16]
-    print(f"Label shape: {tuple(lab.shape)}")   # expect [1, 1, 144, 128, 16] or [1, 144, 128, 16]
+    # ---------- LABELED SAMPLE ----------
+    print("\n===== One LABELED sample =====")
+    lab_sample = next(iter(lab_loader))   # this is a dict, NOT (img, lab)
 
-    # ----- Check an unlabeled sample -----
-    print("\n===== Checking ONE UNLABELED SAMPLE =====")
-    unlab_item = next(iter(unlab_loader))
-    weak = unlab_item["weak"]
-    strong = unlab_item["strong"]
+    print("Labeled sample keys:", lab_sample.keys())
+    for k, v in lab_sample.items():
+        try:
+            # MONAI MetaTensor / Tensor usually has .shape
+            print(f"  {k}: shape = {tuple(v.shape)}")
+        except AttributeError:
+            print(f"  {k}: (no .shape, type={type(v)})")
 
-    print(f"Weak image shape:   {tuple(weak['image'].shape)}")
-    print(f"Strong image shape: {tuple(strong['image'].shape)}")
+    # ---------- UNLABELED SAMPLE ----------
+    print("\n===== One UNLABELED sample =====")
+    unlab_sample = next(iter(unlab_loader))  # dict with 'weak', 'strong', 'patient_id'
 
-    # ----- Check SDCL dual loaders -----
-    print("\n===== Testing get_sdcl_dataloaders() =====")
-    lab_a, lab_b, unlab_a, unlab_b, val_loader_sd = get_sdcl_dataloaders(
-        root, batch_size=1
-    )
+    print("Unlabeled sample keys:", unlab_sample.keys())
+    weak = unlab_sample["weak"]
+    strong = unlab_sample["strong"]
 
-    print(f"lab_a len: {len(lab_a.dataset)}, lab_b len: {len(lab_b.dataset)}")
-    print(f"unlab_a len: {len(unlab_a.dataset)}, unlab_b len: {len(unlab_b.dataset)}")
+    print("\n  Weak keys:", weak.keys())
+    for k, v in weak.items():
+        try:
+            print(f"    weak[{k}]: shape = {tuple(v.shape)}")
+        except AttributeError:
+            print(f"    weak[{k}]: (no .shape, type={type(v)})")
 
-    imgA, labA = next(iter(lab_a))
-    imgU, _ = next(iter(unlab_a))
+    print("\n  Strong keys:", strong.keys())
+    for k, v in strong.items():
+        try:
+            print(f"    strong[{k}]: shape = {tuple(v.shape)}")
+        except AttributeError:
+            print(f"    strong[{k}]: (no .shape, type={type(v)})")
 
-    print(f"\nSDCL labeled image shape:   {tuple(imgA.shape)}")
-    print(f"SDCL labeled label shape:   {tuple(labA.shape)}")
-    print(f"SDCL unlabeled image shape: {tuple(imgU.shape)}")
+    # ---------- VALIDATION SAMPLE ----------
+    print("\n===== One VALIDATION sample =====")
+    val_sample = next(iter(val_loader))
+    print("Val sample keys:", val_sample.keys())
+    for k, v in val_sample.items():
+        try:
+            print(f"  {k}: shape = {tuple(v.shape)}")
+        except AttributeError:
+            print(f"  {k}: (no .shape, type={type(v)})")
 
 
 if __name__ == "__main__":
