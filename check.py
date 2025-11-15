@@ -2,7 +2,7 @@ import torch
 from picai_dataset import prepare_semi_supervised, get_sdcl_dataloaders
 
 def main():
-    root = "E:\Dataset\PICAI\ssl_final_data\picai_144_128_16"   # <<< CHANGE THIS
+    root = "/content/drive/MyDrive/Research/Dataset/ssl_final_data/picai_data_144_128_16"   # <<< CHANGE THIS
 
     print("\n===== Testing prepare_semi_supervised() =====")
     lab_loader, unlab_loader, val_loader = prepare_semi_supervised(
