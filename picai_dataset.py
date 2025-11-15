@@ -279,11 +279,11 @@ def get_sdcl_dataloaders(
     unlabeled_ds_dual = unlabeled_loader.dataset
     val_ds_m = val_loader.dataset
 
-    lab_ds_a = LabeledPairDataset(labeled_ds_m, image_key="image", label_key="seg")
-    lab_ds_b = LabeledPairDataset(labeled_ds_m, image_key="image", label_key="seg")
+    lab_ds_a = LabeledPairDataset(labeled_ds_m, image_key="img", label_key="seg")
+    lab_ds_b = LabeledPairDataset(labeled_ds_m, image_key="img", label_key="seg")
 
-    unlab_ds_a = UnlabeledPairDataset(unlabeled_ds_dual, view="weak", image_key="image")
-    unlab_ds_b = UnlabeledPairDataset(unlabeled_ds_dual, view="strong", image_key="image")
+    unlab_ds_a = UnlabeledPairDataset(unlabeled_ds_dual, view="weak", image_key="img")
+    unlab_ds_b = UnlabeledPairDataset(unlabeled_ds_dual, view="strong", image_key="img")
 
     lab_loader_a = DataLoader(
         lab_ds_a,
@@ -314,7 +314,7 @@ def get_sdcl_dataloaders(
         drop_last=True,
     )
 
-    val_sdcl_ds = LabeledPairDataset(val_ds_m, image_key="image", label_key="seg")
+    val_sdcl_ds = LabeledPairDataset(val_ds_m, image_key="img", label_key="seg")
     val_loader_sdcl = DataLoader(
         val_sdcl_ds, batch_size=1, shuffle=False, num_workers=num_workers
     )
