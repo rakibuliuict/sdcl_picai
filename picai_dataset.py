@@ -190,7 +190,7 @@ def prepare_semi_supervised(
     *,
     cache: bool = False,
     cache_rate: float = 1.0,
-    num_workers: int = 4,
+    num_workers: int = 2,
     batch_size_labeled: int = 1,
     batch_size_unlabeled: int = 2,
     batch_size_val: int = 1,
