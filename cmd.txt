@@ -1,0 +1,1 @@
+python train_sdcl_picai.py --root_path /content/drive/MyDrive/Research/Dataset/ssl_final_data/picai_data_144_128_16 --gpu 0 --batch_size 2 --max_epoch 30 --num_classes 2
