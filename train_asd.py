@@ -154,7 +154,7 @@ def _compute_binary_surface_distances(pred, gt, spacing=(0.5, 0.5, 1.0)):
     return all_distances
 
 
-def compute_95hd_asd(pred, gt, spacing=(1.0, 1.0, 1.0)):
+def compute_95hd_asd(pred, gt, spacing=(0.5, 0.5, 1.0)):
     """
     Compute 95% Hausdorff Distance and Average Surface Distance
     for binary foreground masks.
