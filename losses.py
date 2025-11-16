@@ -62,7 +62,66 @@ def softmax_mse_loss(input_logits, target_probs):
 voxel_kl_loss = nn.KLDivLoss(reduction="none")
 
 
-def mix_loss(output, img_l, patch_l, mask, num_classes: int, l_weight: float = 1.0, u_weight: float = 0.5, unlab: bool = False):
+# def mix_loss(output, img_l, patch_l, mask, num_classes: int, l_weight: float = 1.0, u_weight: float = 0.5, unlab: bool = False):
+#     """
+#     Bidirectional copy-paste segmentation loss:
+#     - img_l: labels in region where mask==1
+#     - patch_l: labels in region where mask==0
+#     mask: [B, ...] float/binary
+#     """
+#     CE = nn.CrossEntropyLoss(reduction="none")
+#     img_l = img_l.long()
+#     patch_l = patch_l.long()
+
+#     output_soft = F.softmax(output, dim=1)
+
+#     image_weight, patch_weight = l_weight, u_weight
+#     if unlab:
+#         image_weight, patch_weight = u_weight, l_weight
+
+#     patch_mask = 1.0 - mask
+
+#     # Dice on masked regions
+#     img_onehot = to_one_hot(img_l.unsqueeze(1), num_classes)
+#     patch_onehot = to_one_hot(patch_l.unsqueeze(1), num_classes)
+
+#     dims = tuple(range(2, output_soft.dim()))
+#     prob_img = output_soft
+#     prob_patch = output_soft
+
+#     # image region
+#     inter_img = torch.sum(prob_img * img_onehot, dim=dims)
+#     denom_img = torch.sum(prob_img, dim=dims) + torch.sum(img_onehot, dim=dims)
+#     dice_img = (2.0 * inter_img + 1e-5) / (denom_img + 1e-5)
+
+#     # patch region
+#     inter_patch = torch.sum(prob_patch * patch_onehot, dim=dims)
+#     denom_patch = torch.sum(prob_patch, dim=dims) + torch.sum(patch_onehot, dim=dims)
+#     dice_patch = (2.0 * inter_patch + 1e-5) / (denom_patch + 1e-5)
+
+#     dice_img = (1.0 - dice_img) * (mask.view(mask.size(0), -1).mean(dim=1))
+#     dice_patch = (1.0 - dice_patch) * (patch_mask.view(patch_mask.size(0), -1).mean(dim=1))
+
+#     loss_dice = image_weight * dice_img.mean() + patch_weight * dice_patch.mean()
+
+#     # CE on both regions
+#     ce_all = CE(output, img_l) * mask + CE(output, patch_l) * patch_mask
+#     loss_ce = (image_weight * (CE(output, img_l) * mask).sum() / (mask.sum() + 1e-16) +
+#                patch_weight * (CE(output, patch_l) * patch_mask).sum() / (patch_mask.sum() + 1e-16))
+
+#     return loss_dice, loss_ce
+
+
+def mix_loss(
+    output,
+    img_l,
+    patch_l,
+    mask,
+    num_classes: int,
+    l_weight: float = 1.0,
+    u_weight: float = 0.5,
+    unlab: bool = False,
+):
     """
     Bidirectional copy-paste segmentation loss:
     - img_l: labels in region where mask==1
@@ -79,6 +138,7 @@ def mix_loss(output, img_l, patch_l, mask, num_classes: int, l_weight: float = 1
     if unlab:
         image_weight, patch_weight = u_weight, l_weight
 
+    # mask: [B, H, W, D]   (from loss_mask)
     patch_mask = 1.0 - mask
 
     # Dice on masked regions
@@ -92,22 +152,30 @@ def mix_loss(output, img_l, patch_l, mask, num_classes: int, l_weight: float = 1
     # image region
     inter_img = torch.sum(prob_img * img_onehot, dim=dims)
     denom_img = torch.sum(prob_img, dim=dims) + torch.sum(img_onehot, dim=dims)
-    dice_img = (2.0 * inter_img + 1e-5) / (denom_img + 1e-5)
+    dice_img = (2.0 * inter_img + 1e-5) / (denom_img + 1e-5)   # [B, num_classes]
 
     # patch region
     inter_patch = torch.sum(prob_patch * patch_onehot, dim=dims)
     denom_patch = torch.sum(prob_patch, dim=dims) + torch.sum(patch_onehot, dim=dims)
-    dice_patch = (2.0 * inter_patch + 1e-5) / (denom_patch + 1e-5)
+    dice_patch = (2.0 * inter_patch + 1e-5) / (denom_patch + 1e-5)  # [B, num_classes]
 
-    dice_img = (1.0 - dice_img) * (mask.view(mask.size(0), -1).mean(dim=1))
-    dice_patch = (1.0 - dice_patch) * (patch_mask.view(patch_mask.size(0), -1).mean(dim=1))
+    # ---- FIXED PART: make region weights [B, 1], not [B] ----
+    img_region_weight = mask.view(mask.size(0), -1).mean(dim=1, keepdim=True)         # [B, 1]
+    patch_region_weight = patch_mask.view(patch_mask.size(0), -1).mean(dim=1, keepdim=True)  # [B, 1]
+
+    dice_img = (1.0 - dice_img) * img_region_weight      # [B, num_classes]
+    dice_patch = (1.0 - dice_patch) * patch_region_weight  # [B, num_classes]
 
     loss_dice = image_weight * dice_img.mean() + patch_weight * dice_patch.mean()
 
     # CE on both regions
-    ce_all = CE(output, img_l) * mask + CE(output, patch_l) * patch_mask
-    loss_ce = (image_weight * (CE(output, img_l) * mask).sum() / (mask.sum() + 1e-16) +
-               patch_weight * (CE(output, patch_l) * patch_mask).sum() / (patch_mask.sum() + 1e-16))
+    ce_img = CE(output, img_l)      # [B, H, W, D]
+    ce_patch = CE(output, patch_l)  # [B, H, W, D]
+
+    loss_ce = (
+        image_weight * (ce_img * mask).sum() / (mask.sum() + 1e-16)
+        + patch_weight * (ce_patch * patch_mask).sum() / (patch_mask.sum() + 1e-16)
+    )
 
     return loss_dice, loss_ce
 
