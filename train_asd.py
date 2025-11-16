@@ -113,7 +113,7 @@ def dice_metric_from_logits(logits, targets, num_classes: int):
         return float(torch.mean(torch.stack(dices)))
 
 
-def _compute_binary_surface_distances(pred, gt, spacing=(1.0, 1.0, 1.0)):
+def _compute_binary_surface_distances(pred, gt, spacing=(0.5, 0.5, 1.0)):
     """
     pred, gt: boolean numpy arrays with shape [H, W, D]
     spacing: voxel spacing (z,y,x) or (H,W,D) order; here we assume (1,1,1).

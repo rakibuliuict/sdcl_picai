@@ -1,1 +1,0 @@
-[18:39:29.603] Namespace(root_path='E:\\Dataset\\PICAI\\ssl_final_data\\picai_144_128_16', gpu='0', batch_size=2, max_epoch=30, num_classes=2, u_weight=0.5, seed=1337, lr=0.001, snapshot_path='./runs_sdcl_picai')
