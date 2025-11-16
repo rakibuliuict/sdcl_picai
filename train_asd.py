@@ -80,11 +80,15 @@ class BCPNet(nn.Module):
 
 
 def update_ema_variables(model, ema_model, alpha=0.99):
-    """
-    EMA update for teacher model.
-    """
+    # 1) EMA update for parameters
     for ema_param, param in zip(ema_model.parameters(), model.parameters()):
         ema_param.data.mul_(alpha).add_(param.data, alpha=1 - alpha)
+
+    # 2) COPY BatchNorm (and other) buffers directly
+    #    (you can also EMA them, but copying is usually fine)
+    for ema_buf, buf in zip(ema_model.buffers(), model.buffers()):
+        ema_buf.data.copy_(buf.data)
+
 
 
 # -------------------------
