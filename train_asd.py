@@ -874,7 +874,7 @@ class BCPNet(nn.Module):
                 use_checkpoint=True,
             )
 
-        elif model_name == "vnet":
+        elif model_name == "attunet":
             # You showed this working pattern:
             # SwinUNETR(in_channels=4, out_channels=3, feature_size=48, use_checkpoint=True)
             # so we follow that style.
@@ -900,15 +900,7 @@ class BCPNet(nn.Module):
                 norm=Norm.BATCH,
             )
 
-# model = UNet(
-#     spatial_dims=3,
-#     in_channels=3,
-#     out_channels=2,
-#     channels=(16,32, 64, 128,256),
-#     strides=(2,2,2,2),
-#     num_res_units=2,
-#     norm=Norm.BATCH,
-# ).to(device)
+
         elif model_name == "unetr":
             # Most MONAI versions: UNETR(in_channels=..., out_channels=..., img_size=(H,W,D), ...)
             # If your MONAI complains, we'll adjust this call only.
