@@ -808,7 +808,7 @@ from losses import (
 # MONAI transformer models
 from monai.networks.nets import SwinUNETR, UNETR, VNet, UNet, AttentionUnet
 from monai.networks.layers import Norm
-
+import segmentation_models_pytorch_3d as smp
 
 # -------------------------
 # Utility: BCP mask
@@ -908,6 +908,16 @@ class BCPNet(nn.Module):
                 in_channels=in_chns,
                 out_channels=num_classes,
                 img_size=(144, 128, 16),
+            )
+
+        elif model_name == "resunet":
+            # Most MONAI versions: UNETR(in_channels=..., out_channels=..., img_size=(H,W,D), ...)
+            # If your MONAI complains, we'll adjust this call only.
+            self.net = smp.Unet(
+            encoder_name="resnet50",        
+            in_channels=3,                  
+            strides=((2, 2, 2), (4, 2, 1), (2, 2, 2), (2, 2, 1), (1, 2, 3)),
+            classes=2, 
             )
 
         else:
